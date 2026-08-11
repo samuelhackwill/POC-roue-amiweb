@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
-import trialVectorSvg from '../trial vector.svg?raw'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import defaultVectorSvg from '../vector-7.svg?raw'
 
 type PortraitItem = {
   id: string | number
@@ -44,10 +44,12 @@ type AnchoredPortrait = {
 
 type InteractiveVectorWheelProps = {
   items?: PortraitItem[]
+  vectorSvg?: string
 }
 
 const props = withDefaults(defineProps<InteractiveVectorWheelProps>(), {
   items: () => [],
+  vectorSvg: defaultVectorSvg,
 })
 
 const HANDLE_COLLAPSE_EPSILON = 0.01
@@ -70,13 +72,13 @@ const BLOB_PATHS = [
 const svgElement = ref<SVGSVGElement | null>(null)
 const rotation = ref(0)
 const isDragging = ref(false)
-const svgData = parseSvg(trialVectorSvg)
-const paddedViewBox = expandViewBox(svgData.viewBox, VIEWBOX_PADDING)
-const paddedViewBoxRect = viewBoxRect(paddedViewBox)
-const center = centerFromViewBox(svgData.viewBox)
-const cubicSegments = parseCubicPath(svgData.pathD)
-const anchorPoints = findCollapsedHandleAnchors(cubicSegments)
-const anchoredPortraits = computed(() => buildAnchoredPortraits(anchorPoints, props.items))
+const svgData = computed(() => parseSvg(props.vectorSvg))
+const paddedViewBox = computed(() => expandViewBox(svgData.value.viewBox, VIEWBOX_PADDING))
+const paddedViewBoxRect = computed(() => viewBoxRect(paddedViewBox.value))
+const center = computed(() => centerFromViewBox(svgData.value.viewBox))
+const pathSegments = computed(() => parsePath(svgData.value.pathD))
+const anchorPoints = computed(() => findCollapsedHandleAnchors(pathSegments.value))
+const anchoredPortraits = computed(() => buildAnchoredPortraits(anchorPoints.value, props.items))
 let lastPointerAngle = 0
 let lastPointerTime = 0
 let angularVelocity = 0
@@ -84,7 +86,7 @@ let inertiaFrameId: number | null = null
 let lastInertiaFrameTime = 0
 
 const wheelTransform = computed(() => {
-  return `rotate(${rotation.value} ${center.x} ${center.y})`
+  return `rotate(${rotation.value} ${center.value.x} ${center.value.y})`
 })
 
 const counterRotation = computed(() => {
@@ -142,7 +144,7 @@ function onPointerUp(event: PointerEvent) {
 function angleFromPointer(event: PointerEvent) {
   const point = clientPointToSvgPoint(event)
 
-  return (Math.atan2(point.y - center.y, point.x - center.x) * 180) / Math.PI
+  return (Math.atan2(point.y - center.value.y, point.x - center.value.x) * 180) / Math.PI
 }
 
 function clientPointToSvgPoint(event: PointerEvent) {
@@ -160,7 +162,7 @@ function clientPointToSvgPoint(event: PointerEvent) {
     }
   }
 
-  return center
+  return center.value
 }
 
 function startInertia() {
@@ -219,35 +221,60 @@ function parseSvg(svg: string) {
   }
 }
 
-function parseCubicPath(pathD: string) {
+function parsePath(pathD: string) {
   const tokens = pathD.match(/[a-zA-Z]|-?\d*\.?\d+(?:e[-+]?\d+)?/gi) ?? []
   const segments: CubicSegment[] = []
   let index = 0
+  let command = ''
   let current: Point | null = null
 
   while (index < tokens.length) {
-    const command = tokens[index++]
+    if (isCommand(tokens[index])) {
+      command = tokens[index++]
+    }
 
     if (command === 'M') {
       current = readPoint(tokens, index)
       index += 2
+      command = 'L'
+      continue
+    }
+
+    if (command === 'L' && current) {
+      while (index < tokens.length && !isCommand(tokens[index])) {
+        const end = readPoint(tokens, index)
+
+        segments.push({
+          start: current,
+          c1: current,
+          c2: end,
+          end,
+        })
+
+        current = end
+        index += 2
+      }
+
       continue
     }
 
     if (command === 'C' && current) {
-      const c1 = readPoint(tokens, index)
-      const c2 = readPoint(tokens, index + 2)
-      const end = readPoint(tokens, index + 4)
+      while (index < tokens.length && !isCommand(tokens[index])) {
+        const c1 = readPoint(tokens, index)
+        const c2 = readPoint(tokens, index + 2)
+        const end = readPoint(tokens, index + 4)
 
-      segments.push({
-        start: current,
-        c1,
-        c2,
-        end,
-      })
+        segments.push({
+          start: current,
+          c1,
+          c2,
+          end,
+        })
 
-      current = end
-      index += 6
+        current = end
+        index += 6
+      }
+
       continue
     }
 
@@ -257,6 +284,10 @@ function parseCubicPath(pathD: string) {
   }
 
   return segments
+}
+
+function isCommand(token: string) {
+  return /^[A-Za-z]$/.test(token)
 }
 
 function findCollapsedHandleAnchors(segments: CubicSegment[]) {
@@ -358,6 +389,16 @@ function readPoint(tokens: string[], index: number) {
 function distance(a: Point, b: Point) {
   return Math.hypot(a.x - b.x, a.y - b.y)
 }
+
+watch(
+  () => props.vectorSvg,
+  () => {
+    cancelInertia()
+    isDragging.value = false
+    angularVelocity = 0
+    rotation.value = 0
+  },
+)
 
 onBeforeUnmount(() => {
   cancelInertia()

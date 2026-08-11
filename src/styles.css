@@ -43,6 +43,74 @@ body {
   font-size: 1rem;
 }
 
+.live-wheel {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 560px);
+  gap: 28px;
+  align-items: start;
+  justify-content: space-between;
+  margin-bottom: 48px;
+}
+
+.live-wheel__controls {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.live-wheel__meta {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.live-wheel h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.live-wheel span {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.live-wheel__wheel {
+  margin-top: 0;
+}
+
+.count-toggle {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.count-toggle__button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid #a8a8a4;
+  border-radius: 6px;
+  color: #262626;
+  background: transparent;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.count-toggle__button:hover {
+  border-color: #6679ff;
+}
+
+.count-toggle__button--active {
+  border-color: #6679ff;
+  color: white;
+  background: #6679ff;
+}
+
 .demo-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
@@ -73,4 +141,20 @@ body {
 .demo-panel span {
   color: #666;
   font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .live-wheel {
+    grid-template-columns: 1fr;
+  }
+
+  .count-toggle {
+    grid-template-columns: repeat(9, minmax(32px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .count-toggle {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
 }

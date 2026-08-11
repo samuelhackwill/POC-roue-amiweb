@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import trialVectorSvg from '../trial vector.svg?raw'
+import vector7Svg from '../vector-7.svg?raw'
 
 type PortraitItem = {
   id: string | number
@@ -60,7 +60,7 @@ const BLOB_PATHS = [
   'M .48 .02 C .69 .02 .88 .1 .96 .29 C 1 .48 .95 .74 .78 .9 C .6 1 .35 .97 .18 .85 C .03 .74 .01 .53 .06 .35 C .12 .14 .28 .03 .48 .02 Z',
 ]
 
-const svgData = parseSvg(trialVectorSvg)
+const svgData = parseSvg(vector7Svg)
 const paddedViewBox = expandViewBox(svgData.viewBox, VIEWBOX_PADDING)
 const cubicSegments = parseCubicPath(svgData.pathD)
 const anchorPoints = findCollapsedHandleAnchors(cubicSegments)

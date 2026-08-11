@@ -45,10 +45,10 @@ Push to `main`, then in the GitHub repository settings set Pages source to GitHu
 ## Main Files
 
 - `components/PortraitCircle.vue`: reusable Vue component for the generated portrait-circle layout.
-- `src/VectorAnchorDebug.vue`: trial component that parses `trial vector.svg`, detects anchor points, and overlays portraits.
-- `src/InteractiveVectorWheel.vue`: draggable version of the hand-drawn vector with portraits anchored to it.
+- `src/VectorAnchorDebug.vue`: trial component that parses `vector-7.svg`, detects anchor points, and overlays portraits.
+- `src/InteractiveVectorWheel.vue`: draggable version of a hand-drawn vector with portraits anchored to it.
 - `src/App.vue`: demo page showing 5, 7, and 12 generated circles, plus the hand-drawn SVG anchor test.
-- `trial vector.svg`: hand-drawn blue path used for anchor detection.
+- `vector-2.svg` through `vector-10.svg`: hand-drawn blue paths used for anchor detection.
 - `specifications.markdown`: earlier implementation notes and acceptance criteria.
 
 ## Generated Portrait Circle
@@ -78,10 +78,10 @@ The ring currently has a procedural hand-drawn attempt: several offset Bezier pa
 
 ## SVG Anchor Detection
 
-`VectorAnchorDebug.vue` imports `trial vector.svg` as raw text:
+`VectorAnchorDebug.vue` imports `vector-7.svg` as raw text:
 
 ```ts
-import trialVectorSvg from '../trial vector.svg?raw'
+import vector7Svg from '../vector-7.svg?raw'
 ```
 
 It extracts:
@@ -90,7 +90,7 @@ It extracts:
 - the path `d`
 - the stroke color and stroke width
 
-Then it parses the path commands. The current trial SVG is one `M` command followed by cubic `C` segments.
+Then it parses the path commands. The current parser supports absolute `M`, `L`, `C`, and `Z` commands.
 
 The key rule is:
 
@@ -123,6 +123,8 @@ This proves that a manually drawn vector can drive portrait placement without ad
 
 `InteractiveVectorWheel.vue` reuses the same hand-drawn vector and detected anchors.
 
+At the top of the demo page, `App.vue` imports `vector-2.svg` through `vector-10.svg` and switches the wheel vector plus portrait count from one button group.
+
 The interaction works like this:
 
 1. Pointer down stores the initial pointer angle around the SVG center.
@@ -135,7 +137,7 @@ The interaction works like this:
 
 The path parser is intentionally narrow for the trial:
 
-- supports absolute `M`, `C`, and `Z`
+- supports absolute `M`, `L`, `C`, and `Z`
 - assumes a single path
 - detects only collapsed-handle anchors
 

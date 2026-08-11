@@ -1,7 +1,17 @@
 <script setup lang="ts">
+import { computed, ref } from 'vue'
 import PortraitCircle, { type PortraitCircleItem } from '../components/PortraitCircle.vue'
 import InteractiveVectorWheel from './InteractiveVectorWheel.vue'
 import VectorAnchorDebug from './VectorAnchorDebug.vue'
+import vector2Svg from '../vector-2.svg?raw'
+import vector3Svg from '../vector-3.svg?raw'
+import vector4Svg from '../vector-4.svg?raw'
+import vector5Svg from '../vector-5.svg?raw'
+import vector6Svg from '../vector-6.svg?raw'
+import vector7Svg from '../vector-7.svg?raw'
+import vector8Svg from '../vector-8.svg?raw'
+import vector9Svg from '../vector-9.svg?raw'
+import vector10Svg from '../vector-10.svg?raw'
 
 const portraitUrls = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
@@ -19,6 +29,21 @@ const portraitUrls = [
 ]
 
 const sampleCounts = [5, 7, 12]
+const wheelCounts = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+const selectedPeopleCount = ref(7)
+const vectorByCount: Record<number, string> = {
+  2: vector2Svg,
+  3: vector3Svg,
+  4: vector4Svg,
+  5: vector5Svg,
+  6: vector6Svg,
+  7: vector7Svg,
+  8: vector8Svg,
+  9: vector9Svg,
+  10: vector10Svg,
+}
+const selectedWheelVector = computed(() => vectorByCount[selectedPeopleCount.value])
+const selectedWheelPortraits = computed(() => portraitsFor(selectedPeopleCount.value))
 
 function portraitsFor(count: number): PortraitCircleItem[] {
   return portraitUrls.slice(0, count).map((src, index) => ({
@@ -36,6 +61,35 @@ function portraitsFor(count: number): PortraitCircleItem[] {
       <h1>Portrait Circle</h1>
       <p>Vue/Nuxt SVG module prototype for 5, 7, and 12 portraits.</p>
     </header>
+
+    <section class="live-wheel" aria-label="Interactive portrait wheel by people count">
+      <div class="live-wheel__controls">
+        <div class="live-wheel__meta">
+          <h2>Interactive wheel</h2>
+          <span>{{ selectedPeopleCount }} peeps</span>
+        </div>
+
+        <div class="count-toggle" role="group" aria-label="People count">
+          <button
+            v-for="count in wheelCounts"
+            :key="count"
+            class="count-toggle__button"
+            :class="{ 'count-toggle__button--active': selectedPeopleCount === count }"
+            type="button"
+            :aria-pressed="selectedPeopleCount === count"
+            @click="selectedPeopleCount = count"
+          >
+            {{ count }}
+          </button>
+        </div>
+      </div>
+
+      <InteractiveVectorWheel
+        class="live-wheel__wheel"
+        :items="selectedWheelPortraits"
+        :vector-svg="selectedWheelVector"
+      />
+    </section>
 
     <section class="demo-grid" aria-label="Portrait circle examples">
       <article v-for="count in sampleCounts" :key="count" class="demo-panel">
