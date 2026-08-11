@@ -12,7 +12,8 @@ The demo has two ideas:
 The local demo is served with Vite:
 
 ```sh
-../amiweb-front/node_modules/.bin/vite --host 127.0.0.1
+npm install
+npm run dev
 ```
 
 Then open:
@@ -21,7 +22,21 @@ Then open:
 http://127.0.0.1:5173/
 ```
 
-This POC folder does not contain its own `package.json`; `vite.config.mjs` reuses the sibling `../amiweb-front/node_modules` Vue/Vite install.
+## GitHub Pages
+
+The repository is configured for GitHub Pages at:
+
+```text
+https://samuelhackwill.github.io/POC-roue-amiweb/
+```
+
+The project-page base path is set during the GitHub Actions build:
+
+```yaml
+VITE_BASE_PATH: /POC-roue-amiweb/
+```
+
+Push to `main`, then in the GitHub repository settings set Pages source to GitHub Actions.
 
 ## Main Files
 
