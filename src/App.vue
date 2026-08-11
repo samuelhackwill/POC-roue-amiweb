@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PortraitCircle, { type PortraitCircleItem } from '../components/PortraitCircle.vue'
+import InteractiveVectorWheel from './InteractiveVectorWheel.vue'
 import VectorAnchorDebug from './VectorAnchorDebug.vue'
 
 const portraitUrls = [
@@ -52,5 +53,7 @@ function portraitsFor(count: number): PortraitCircleItem[] {
     </section>
 
     <VectorAnchorDebug :items="portraitsFor(7)" />
+
+    <InteractiveVectorWheel :items="portraitsFor(7)" />
   </main>
 </template>

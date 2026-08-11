@@ -27,6 +27,7 @@ This POC folder does not contain its own `package.json`; `vite.config.mjs` reuse
 
 - `components/PortraitCircle.vue`: reusable Vue component for the generated portrait-circle layout.
 - `src/VectorAnchorDebug.vue`: trial component that parses `trial vector.svg`, detects anchor points, and overlays portraits.
+- `src/InteractiveVectorWheel.vue`: draggable version of the hand-drawn vector with portraits anchored to it.
 - `src/App.vue`: demo page showing 5, 7, and 12 generated circles, plus the hand-drawn SVG anchor test.
 - `trial vector.svg`: hand-drawn blue path used for anchor detection.
 - `specifications.markdown`: earlier implementation notes and acceptance criteria.
@@ -98,6 +99,18 @@ For each anchor:
 4. Draw the original hand-drawn vector behind the portraits.
 
 This proves that a manually drawn vector can drive portrait placement without adding extra marker metadata, as long as the intended portrait anchors are encoded by collapsed handles.
+
+## Draggable Wheel
+
+`InteractiveVectorWheel.vue` reuses the same hand-drawn vector and detected anchors.
+
+The interaction works like this:
+
+1. Pointer down stores the initial pointer angle around the SVG center.
+2. Pointer move updates the wheel rotation from incremental angle deltas and tracks angular velocity.
+3. The vector path and portrait anchor positions rotate together.
+4. Each portrait applies the opposite rotation inside its own group, so the portraits travel around the wheel while staying upright, like ferris-wheel cabins.
+5. Pointer release keeps a decaying inertial spin based on the last drag velocity.
 
 ## Current Limitation
 
