@@ -1,5 +1,9 @@
 # Portrait Circle POC
 
+## Live Demo
+
+https://samuelhackwill.github.io/POC-roue-amiweb/
+
 Small Vue/Nuxt-oriented proof of concept for building a portrait circle like `laroutourne.png`.
 
 The demo has two ideas:
