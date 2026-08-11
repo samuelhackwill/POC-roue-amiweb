@@ -13,6 +13,10 @@ import vector8Svg from '../vector-8.svg?raw'
 import vector9Svg from '../vector-9.svg?raw'
 import vector10Svg from '../vector-10.svg?raw'
 
+type DemoPortraitItem = PortraitCircleItem & {
+  label: string
+}
+
 const portraitUrls = [
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80',
@@ -26,6 +30,20 @@ const portraitUrls = [
   'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1546961329-78bef0414d7c?auto=format&fit=crop&w=600&q=80',
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80',
+]
+const portraitLabels = [
+  'Antoine Defoort',
+  'Julien Fournet',
+  'Sebastien Vial',
+  'Sofia Teillet',
+  'Samuel Hackwill',
+  'Louise Siffert',
+  'Joaqim Fossi',
+  'Camille Durand',
+  'Nadia Benali',
+  'Noam Martin',
+  'Iris Laurent',
+  'Malo Bernard',
 ]
 
 const sampleCounts = [5, 7, 12]
@@ -45,11 +63,12 @@ const vectorByCount: Record<number, string> = {
 const selectedWheelVector = computed(() => vectorByCount[selectedPeopleCount.value])
 const selectedWheelPortraits = computed(() => portraitsFor(selectedPeopleCount.value))
 
-function portraitsFor(count: number): PortraitCircleItem[] {
+function portraitsFor(count: number): DemoPortraitItem[] {
   return portraitUrls.slice(0, count).map((src, index) => ({
     id: `portrait-${count}-${index + 1}`,
     src,
-    alt: `Demo portrait ${index + 1}`,
+    alt: portraitLabels[index],
+    label: portraitLabels[index],
     focusY: index % 3 === 0 ? 0.36 : 0.42,
   }))
 }

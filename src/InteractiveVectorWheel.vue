@@ -6,6 +6,7 @@ type PortraitItem = {
   id: string | number
   src: string
   alt?: string
+  label?: string
   focusX?: number
   focusY?: number
 }
@@ -40,6 +41,14 @@ type AnchoredPortrait = {
   imageX: number
   imageY: number
   preserveAspectRatio: string
+  labelLines: string[]
+}
+
+type WheelLabel = {
+  id: number
+  x: number
+  y: number
+  labelLines: string[]
 }
 
 type InteractiveVectorWheelProps = {
@@ -53,9 +62,13 @@ const props = withDefaults(defineProps<InteractiveVectorWheelProps>(), {
 })
 
 const HANDLE_COLLAPSE_EPSILON = 0.01
-const VIEWBOX_PADDING = 64
+const VIEWBOX_PADDING = 112
 const PORTRAIT_HEIGHT = 70
 const PORTRAIT_WIDTH = 56
+const LABEL_FONT_SIZE = 15
+const LABEL_LINE_HEIGHT = 18
+const LABEL_MIN_OFFSET = 68
+const LABEL_RADIUS_RATIO = 0.28
 const VELOCITY_SMOOTHING = 0.35
 const INERTIA_FRICTION_PER_FRAME = 0.94
 const INERTIA_STOP_VELOCITY = 0.006
@@ -72,6 +85,7 @@ const BLOB_PATHS = [
 const svgElement = ref<SVGSVGElement | null>(null)
 const rotation = ref(0)
 const isDragging = ref(false)
+const labelsVisible = ref(true)
 const svgData = computed(() => parseSvg(props.vectorSvg))
 const paddedViewBox = computed(() => expandViewBox(svgData.value.viewBox, VIEWBOX_PADDING))
 const paddedViewBoxRect = computed(() => viewBoxRect(paddedViewBox.value))
@@ -79,6 +93,34 @@ const center = computed(() => centerFromViewBox(svgData.value.viewBox))
 const pathSegments = computed(() => parsePath(svgData.value.pathD))
 const anchorPoints = computed(() => findCollapsedHandleAnchors(pathSegments.value))
 const anchoredPortraits = computed(() => buildAnchoredPortraits(anchorPoints.value, props.items))
+const labelOffset = computed(() => {
+  const { width, height } = viewBoxRect(svgData.value.viewBox)
+
+  return Math.max(LABEL_MIN_OFFSET, Math.min(width, height) * LABEL_RADIUS_RATIO)
+})
+const wheelLabels = computed(() => {
+  return anchoredPortraits.value.map((portrait) => {
+    const rotatedAnchor = rotatePoint(
+      {
+        x: portrait.anchorX,
+        y: portrait.anchorY,
+      },
+      center.value,
+      rotation.value,
+    )
+    const dx = rotatedAnchor.x - center.value.x
+    const dy = rotatedAnchor.y - center.value.y
+    const length = Math.hypot(dx, dy) || 1
+    const distanceFromCenter = length + labelOffset.value
+
+    return {
+      id: portrait.id,
+      x: center.value.x + (dx / length) * distanceFromCenter,
+      y: center.value.y + (dy / length) * distanceFromCenter,
+      labelLines: portrait.labelLines,
+    }
+  })
+})
 let lastPointerAngle = 0
 let lastPointerTime = 0
 let angularVelocity = 0
@@ -102,6 +144,7 @@ function onPointerDown(event: PointerEvent) {
 
   cancelInertia()
   isDragging.value = true
+  labelsVisible.value = false
   lastPointerAngle = angleFromPointer(event)
   lastPointerTime = performance.now()
   angularVelocity = 0
@@ -168,6 +211,7 @@ function clientPointToSvgPoint(event: PointerEvent) {
 function startInertia() {
   if (Math.abs(angularVelocity) < INERTIA_STOP_VELOCITY) {
     angularVelocity = 0
+    labelsVisible.value = true
     return
   }
 
@@ -186,6 +230,7 @@ function stepInertia(timestamp: number) {
   if (Math.abs(angularVelocity) < INERTIA_STOP_VELOCITY) {
     angularVelocity = 0
     inertiaFrameId = null
+    labelsVisible.value = true
     return
   }
 
@@ -330,8 +375,41 @@ function buildAnchoredPortraits(anchors: AnchorPoint[], items: PortraitItem[]) {
       imageX: -PORTRAIT_WIDTH / 2,
       imageY: -PORTRAIT_HEIGHT / 2,
       preserveAspectRatio: preserveAspectRatioFor(item),
+      labelLines: labelLinesFor(item),
     }
   })
+}
+
+function labelLinesFor(item?: PortraitItem) {
+  const label = item?.label ?? item?.alt ?? ''
+  const trimmedLabel = label.trim()
+
+  if (!trimmedLabel) {
+    return []
+  }
+
+  return trimmedLabel.split(/\s+/)
+}
+
+function rotatePoint(point: Point, origin: Point, degrees: number) {
+  const radians = (degrees * Math.PI) / 180
+  const cos = Math.cos(radians)
+  const sin = Math.sin(radians)
+  const dx = point.x - origin.x
+  const dy = point.y - origin.y
+
+  return {
+    x: origin.x + dx * cos - dy * sin,
+    y: origin.y + dx * sin + dy * cos,
+  }
+}
+
+function labelLineDy(lineCount: number, lineIndex: number) {
+  if (lineIndex === 0) {
+    return `${-((lineCount - 1) * LABEL_LINE_HEIGHT) / 2}`
+  }
+
+  return `${LABEL_LINE_HEIGHT}`
 }
 
 function expandViewBox(viewBox: string, padding: number) {
@@ -397,6 +475,7 @@ watch(
     isDragging.value = false
     angularVelocity = 0
     rotation.value = 0
+    labelsVisible.value = true
   },
 )
 
@@ -475,6 +554,31 @@ onBeforeUnmount(() => {
           </g>
         </g>
       </g>
+
+      <g
+        class="interactive-wheel__labels"
+        :class="{ 'interactive-wheel__labels--visible': labelsVisible }"
+      >
+        <text
+          v-for="label in wheelLabels"
+          :key="label.id"
+          class="interactive-wheel__label"
+          :x="label.x"
+          :y="label.y"
+          :font-size="LABEL_FONT_SIZE"
+          text-anchor="middle"
+          dominant-baseline="middle"
+        >
+          <tspan
+            v-for="(line, lineIndex) in label.labelLines"
+            :key="`${label.id}-${lineIndex}`"
+            :x="label.x"
+            :dy="labelLineDy(label.labelLines.length, lineIndex)"
+          >
+            {{ line }}
+          </tspan>
+        </text>
+      </g>
     </svg>
   </section>
 </template>
@@ -524,6 +628,23 @@ onBeforeUnmount(() => {
 
 .interactive-wheel__portrait {
   pointer-events: none;
+  user-select: none;
+}
+
+.interactive-wheel__labels {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+
+.interactive-wheel__labels--visible {
+  opacity: 1;
+}
+
+.interactive-wheel__label {
+  fill: #191919;
+  font-weight: 400;
+  letter-spacing: 0;
   user-select: none;
 }
 </style>
