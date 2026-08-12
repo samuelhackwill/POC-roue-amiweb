@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import PortraitCircle, { type PortraitCircleItem } from '../components/PortraitCircle.vue'
 import InteractiveVectorWheel from './InteractiveVectorWheel.vue'
+import MultiWheelPrototype from './MultiWheelPrototype.vue'
 import VectorAnchorDebug from './VectorAnchorDebug.vue'
 import vector2Svg from '../vector-2.svg?raw'
 import vector3Svg from '../vector-3.svg?raw'
@@ -80,6 +81,8 @@ function portraitsFor(count: number): DemoPortraitItem[] {
       <h1>Portrait Circle</h1>
       <p>Vue/Nuxt SVG module prototype for 5, 7, and 12 portraits.</p>
     </header>
+
+    <MultiWheelPrototype :items="portraitsFor(12)" />
 
     <section class="live-wheel" aria-label="Interactive portrait wheel by people count">
       <div class="live-wheel__controls">
