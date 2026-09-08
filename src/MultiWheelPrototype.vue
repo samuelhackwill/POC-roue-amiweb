@@ -47,6 +47,19 @@ type DisplayInitial = Point & {
   inside: boolean
 }
 
+type NameListItem = {
+  token: number
+  label: string
+  initials: string
+  familyName: string
+}
+
+type RosterPerson = {
+  code: string
+  label: string
+  familyName: string
+}
+
 type MultiWheelPrototypeProps = {
   items?: PersonItem[]
 }
@@ -75,6 +88,82 @@ const SNAP_DURATION_MS = 260
 const RELEASE_INERTIA_MS = 420
 const RELEASE_INERTIA_FACTOR = 170
 const WHEEL_CODES = ['HG', 'AB', 'RM', 'MM', 'SB', 'SC', 'RL', 'GO', 'JD', 'SM']
+const nameCollator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' })
+const PRIMARY_ROSTER: RosterPerson[] = [
+  { code: 'GOH', label: 'Halory Goerger', familyName: 'Goerger' },
+  { code: 'FOJ’', label: 'Julien Fournet', familyName: 'Fournet' },
+  { code: 'LEM', label: 'Marion Le Guerroué', familyName: 'Le Guerroué' },
+  { code: 'FOJ', label: 'Joaquim Fossi', familyName: 'Fossi' },
+  { code: 'DOS', label: 'Salomé Dollat', familyName: 'Dollat' },
+  { code: 'MAM', label: 'Mathilde Maillard', familyName: 'Maillard' },
+  { code: 'DEA', label: 'Antoine Defoort', familyName: 'Defoort' },
+  { code: 'BES', label: 'Sebastien Bausseron', familyName: 'Bausseron' },
+  { code: 'LAR', label: 'Rémi Laidebeurre', familyName: 'Laidebeurre' },
+  { code: 'MIR', label: 'Robin Mignot', familyName: 'Mignot' },
+  { code: 'SAY', label: 'Yulia Sakun', familyName: 'Sakun' },
+  { code: 'DEK', label: 'Kévin Defrennes', familyName: 'Defrennes' },
+  { code: 'MII', label: 'Ina Mihalache', familyName: 'Mihalache' },
+  { code: 'TEM', label: 'Marine Thevenet', familyName: 'Thevenet' },
+  { code: 'BRA', label: 'Alice Broyelle', familyName: 'Broyelle' },
+  { code: 'MOL', label: 'Lorette Moreau', familyName: 'Moreau' },
+  { code: 'SIL', label: 'Louise Siffert', familyName: 'Siffert' },
+  { code: 'VIS', label: 'Sébastien Vial', familyName: 'Vial' },
+]
+const ADDITIONAL_FIRST_NAMES = [
+  'Agathe',
+  'Baptiste',
+  'Clara',
+  'Diane',
+  'Etienne',
+  'Fatou',
+  'Gabriel',
+  'Hanae',
+  'Ismael',
+  'Jeanne',
+  'Lina',
+  'Mathis',
+  'Nora',
+  'Oscar',
+  'Paola',
+  'Quentin',
+  'Rania',
+  'Simon',
+  'Tara',
+  'Ulysse',
+  'Victoire',
+  'William',
+  'Xavier',
+  'Yasmine',
+  'Zoé',
+]
+const ADDITIONAL_LAST_NAMES = [
+  'Allard',
+  'Benoit',
+  'Charpentier',
+  'Delmas',
+  'Evrard',
+  'Fontaine',
+  'Giraud',
+  'Hamel',
+  'Imbert',
+  'Jourdain',
+  'Klein',
+  'Lemoine',
+  'Mercier',
+  'Navarro',
+  'Ollivier',
+  'Perrot',
+  'Quenot',
+  'Rousseau',
+  'Saunier',
+  'Tessier',
+  'Urban',
+  'Vasseur',
+  'Watteau',
+  'Xiberras',
+  'Yver',
+  'Zimmer',
+]
 const BLOB_PATHS = [
   'M .5 .01 C .72 .02 .9 .13 .97 .33 C 1 .5 .94 .74 .78 .88 C .62 1 .34 .99 .18 .87 C .03 .76 .01 .52 .06 .32 C .12 .12 .29 0 .5 .01 Z',
   'M .46 .02 C .7 0 .9 .11 .97 .31 C 1 .49 .94 .72 .8 .9 C .65 1 .37 .98 .19 .88 C .02 .77 0 .56 .05 .36 C .13 .16 .25 .04 .46 .02 Z',
@@ -87,6 +176,8 @@ const activeWheelId = ref<number | null>(null)
 const dragRotation = ref(0)
 const isSnapping = ref(false)
 const peopleCount = ref(DEFAULT_PEOPLE_COUNT)
+const hoveredToken = ref<number | null>(null)
+const hasNameListExpanded = ref(false)
 const wheelVectorRotations = ref(Array(wheelCountForPeople(DEFAULT_PEOPLE_COUNT)).fill(0))
 let lastPointerAngle = 0
 let lastPointerTime = 0
@@ -153,6 +244,30 @@ const peopleCountControl = computed({
 
 const tokenIds = computed(() => {
   return [...new Set(slots.value.flat().filter((token): token is number => token !== null))]
+})
+const visiblePortraits = computed(() => {
+  return renderWheels.value.flatMap((wheel) => displayPortraitsForWheel(wheel))
+})
+const peopleList = computed<NameListItem[]>(() => {
+  return Array.from({ length: peopleCount.value }, (_, token) => {
+    const rosterPerson = rosterPersonForToken(token)
+
+    return {
+      token,
+      label: rosterPerson.label,
+      initials: rosterPerson.code,
+      familyName: rosterPerson.familyName,
+    }
+  }).sort((firstPerson, secondPerson) => {
+    return (
+      nameCollator.compare(firstPerson.familyName, secondPerson.familyName) ||
+      nameCollator.compare(firstPerson.label, secondPerson.label) ||
+      firstPerson.token - secondPerson.token
+    )
+  })
+})
+const isNameListExpanded = computed(() => {
+  return hasNameListExpanded.value
 })
 
 function displaySlotsForWheel(wheel: Wheel) {
@@ -233,30 +348,47 @@ function setPeopleCount(value: number) {
 
 function createSlotsForPeople(count: number, slotsPerWheel: number) {
   const wheelSlots = wheels.value.map(() => Array<SlotToken>(slotsPerWheel).fill(null))
-  let token = 0
+  const randomizedTokens = shuffledTokenIds(count)
+  let tokenIndex = 0
 
   sharedEdges.value.forEach((edge) => {
-    if (token >= count) {
+    if (tokenIndex >= randomizedTokens.length) {
       return
     }
 
+    const token = randomizedTokens[tokenIndex]
+
     wheelSlots[edge.leftWheel][0] = token
     wheelSlots[edge.rightWheel][slotsPerWheel / 2] = token
-    token += 1
+    tokenIndex += 1
   })
 
   nonSharedSlotOrder(slotsPerWheel).forEach((slot) => {
     wheels.value.forEach((wheel) => {
-      if (token >= count || sharedEdgeForSlot(wheel.id, slot)) {
+      if (tokenIndex >= randomizedTokens.length || sharedEdgeForSlot(wheel.id, slot)) {
         return
       }
 
-      wheelSlots[wheel.id][slot] = token
-      token += 1
+      wheelSlots[wheel.id][slot] = randomizedTokens[tokenIndex]
+      tokenIndex += 1
     })
   })
 
   return wheelSlots
+}
+
+function shuffledTokenIds(count: number) {
+  const tokens = Array.from({ length: count }, (_, token) => token)
+
+  for (let index = tokens.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1))
+    const token = tokens[index]
+
+    tokens[index] = tokens[randomIndex]
+    tokens[randomIndex] = token
+  }
+
+  return tokens
 }
 
 function uniqueSlotCapacity(slotsPerWheel: number) {
@@ -297,27 +429,63 @@ function resizeRotations(rotations: number[], nextLength: number) {
 }
 
 function personForToken(token: number) {
+  const rosterPerson = rosterPersonForToken(token)
   const fallback = {
     id: token,
     src: '',
-    alt: `Portrait ${token + 1}`,
-    label: `P${token + 1}`,
+    alt: rosterPerson.label,
+    label: rosterPerson.label,
   }
 
   if (props.items.length === 0) {
     return fallback
   }
 
-  return props.items[token % props.items.length] ?? fallback
+  const item = props.items[token % props.items.length]
+
+  return item
+    ? {
+        ...item,
+        alt: item.alt ?? rosterPerson.label,
+        label: rosterPerson.label,
+      }
+    : fallback
+}
+
+function nameForToken(token: number) {
+  return rosterPersonForToken(token).label
 }
 
 function initialsForToken(token: number) {
-  const item = personForToken(token)
-  const rawName = item.label ?? item.alt ?? `P ${token + 1}`
-  const [firstName, lastName] = nameParts(rawName)
-  const initials = `${lastName.slice(0, 2)}${firstName.slice(0, 1)}`.toUpperCase()
+  return rosterPersonForToken(token).code
+}
 
-  return initials || `P${token + 1}`
+function rosterPersonForToken(token: number): RosterPerson {
+  const primaryPerson = PRIMARY_ROSTER[token]
+
+  if (primaryPerson) {
+    return primaryPerson
+  }
+
+  const additionalIndex = token - PRIMARY_ROSTER.length
+  const firstName = ADDITIONAL_FIRST_NAMES[additionalIndex % ADDITIONAL_FIRST_NAMES.length]
+  const lastName =
+    ADDITIONAL_LAST_NAMES[
+      Math.floor(additionalIndex / ADDITIONAL_FIRST_NAMES.length) % ADDITIONAL_LAST_NAMES.length
+    ]
+  const label = `${firstName} ${lastName}`
+
+  return {
+    code: codeForName(label) || `P${token + 1}`,
+    label,
+    familyName: lastName,
+  }
+}
+
+function codeForName(rawName: string) {
+  const [firstName, lastName] = nameParts(rawName)
+
+  return `${lastName.slice(0, 2)}${firstName.slice(0, 1)}`.toUpperCase()
 }
 
 function labelTextForToken(token: number, wheelId: number, slot: number) {
@@ -390,11 +558,13 @@ function onPointerDown(wheelId: number, event: PointerEvent) {
   lastPointerAngle = angleFromPointer(wheelId, event)
   lastPointerTime = performance.now()
   angularVelocity = 0
+  hoveredToken.value = null
   svg.setPointerCapture(event.pointerId)
 }
 
 function onPointerMove(event: PointerEvent) {
   if (activeWheelId.value === null) {
+    updateHoveredTokenFromPointer(event)
     return
   }
 
@@ -424,6 +594,46 @@ function onPointerUp(event: PointerEvent) {
   }
 }
 
+function updateHoveredTokenFromPointer(event: PointerEvent) {
+  const point = clientPointToSvgPoint(event)
+  const hoveredPortrait = [...visiblePortraits.value].reverse().find((portrait) => {
+    return (
+      Math.abs(point.x - portrait.x) <= portraitWidth.value / 2 &&
+      Math.abs(point.y - portrait.y) <= portraitHeight.value / 2
+    )
+  })
+
+  hoveredToken.value = hoveredPortrait?.token ?? null
+
+  if (hoveredPortrait) {
+    expandNameList()
+  }
+}
+
+function clearHoveredToken() {
+  hoveredToken.value = null
+}
+
+function expandNameList() {
+  hasNameListExpanded.value = true
+}
+
+function onWheelPointerLeave() {
+  clearHoveredToken()
+}
+
+function isTokenMuted(token: number) {
+  return hoveredToken.value !== null && hoveredToken.value !== token
+}
+
+function setHoveredToken(token: number) {
+  hoveredToken.value = token
+}
+
+function onNameListMouseLeave() {
+  clearHoveredToken()
+}
+
 function snapActiveWheel() {
   const wheelId = activeWheelId.value
 
@@ -434,7 +644,7 @@ function snapActiveWheel() {
   const startRotation = dragRotation.value
   const inertialRotation = angularVelocity * RELEASE_INERTIA_FACTOR
   const overshootRotation = startRotation + inertialRotation
-  const targetSteps = directionalSnapSteps(overshootRotation, movementDirection(inertialRotation, startRotation))
+  const targetSteps = closestSnapSteps(overshootRotation)
   const targetRotation = targetSteps * slotStep.value
   const startedAt = performance.now()
 
@@ -503,27 +713,8 @@ function commitWheelRotation(wheelId: number, stepDelta: number) {
   slots.value = nextSlots
 }
 
-function movementDirection(inertialRotation: number, startRotation: number) {
-  if (Math.abs(inertialRotation) > 1) {
-    return Math.sign(inertialRotation)
-  }
-
-  return Math.sign(startRotation)
-}
-
-function directionalSnapSteps(rotation: number, direction: number) {
-  const stepFloat = rotation / slotStep.value
-  const snapPrecision = 0.000001
-
-  if (direction > 0) {
-    return Math.ceil(stepFloat - snapPrecision)
-  }
-
-  if (direction < 0) {
-    return Math.floor(stepFloat + snapPrecision)
-  }
-
-  return Math.round(stepFloat)
+function closestSnapSteps(rotation: number) {
+  return Math.round(rotation / slotStep.value)
 }
 
 function cancelSnap() {
@@ -744,11 +935,13 @@ onBeforeUnmount(() => {
       <svg
         ref="svgElement"
         class="multi-wheel-prototype__svg"
+        :class="{ 'multi-wheel-prototype__svg--portrait-hovered': hoveredToken !== null && activeWheelId === null }"
         :viewBox="viewBox"
         xmlns="http://www.w3.org/2000/svg"
         role="img"
         aria-label="Prototype de roues connectees avec portraits partages et rotation crantee"
         @pointermove="onPointerMove"
+        @pointerleave="onWheelPointerLeave"
         @pointerup="onPointerUp"
         @pointercancel="onPointerUp"
         @lostpointercapture="onPointerUp"
@@ -822,8 +1015,20 @@ onBeforeUnmount(() => {
               :transform="`translate(${portrait.x} ${portrait.y})`"
             >
               <g>
+                <path
+                  class="multi-wheel-prototype__portrait-outline"
+                  :class="{ 'multi-wheel-prototype__portrait-outline--active': hoveredToken === portrait.token }"
+                  :d="BLOB_PATHS[portrait.token % BLOB_PATHS.length]"
+                  :transform="`translate(${-portraitWidth / 2} ${-portraitHeight / 2}) scale(${portraitWidth} ${portraitHeight})`"
+                  vector-effect="non-scaling-stroke"
+                />
+
                 <image
                   class="multi-wheel-prototype__portrait-image"
+                  :class="{
+                    'multi-wheel-prototype__portrait-image--muted': isTokenMuted(portrait.token),
+                    'multi-wheel-prototype__portrait-image--active': hoveredToken === portrait.token,
+                  }"
                   :href="portrait.src"
                   :x="-portraitWidth / 2"
                   :y="-portraitHeight / 2"
@@ -842,7 +1047,10 @@ onBeforeUnmount(() => {
               v-for="initial in displayInitialsForWheel(wheel)"
               :key="initial.key"
               class="multi-wheel-prototype__initial"
-              :class="{ 'multi-wheel-prototype__initial--inside': initial.inside }"
+              :class="{
+                'multi-wheel-prototype__initial--inside': initial.inside,
+                'multi-wheel-prototype__initial--active-wheel': activeWheelId === wheel.id,
+              }"
               :x="initial.x"
               :y="initial.y"
               text-anchor="middle"
@@ -862,6 +1070,50 @@ onBeforeUnmount(() => {
         </g>
       </g>
       </svg>
+    </div>
+
+    <div
+      class="multi-wheel-prototype__name-list"
+      :class="{ 'multi-wheel-prototype__name-list--expanded': isNameListExpanded }"
+      @mouseenter="expandNameList"
+      @mouseleave="onNameListMouseLeave"
+    >
+      <div class="multi-wheel-prototype__name-list-header">
+        <span>Names</span>
+        <button
+          class="multi-wheel-prototype__name-list-toggle"
+          type="button"
+          :aria-expanded="isNameListExpanded"
+          @click="expandNameList"
+        >
+          {{ isNameListExpanded ? 'Expanded' : 'Expand' }}
+        </button>
+      </div>
+
+      <ol class="multi-wheel-prototype__names" aria-label="Portrait names">
+        <li
+          v-for="person in peopleList"
+          :key="person.token"
+          class="multi-wheel-prototype__name-item"
+        >
+          <button
+            class="multi-wheel-prototype__name-button"
+            :class="{
+              'multi-wheel-prototype__name-button--muted': isTokenMuted(person.token),
+              'multi-wheel-prototype__name-button--active': hoveredToken === person.token,
+            }"
+            type="button"
+            :tabindex="isNameListExpanded ? 0 : -1"
+            @mouseenter="setHoveredToken(person.token)"
+            @focus="setHoveredToken(person.token)"
+            @blur="clearHoveredToken"
+            @click="setHoveredToken(person.token)"
+          >
+            <span class="multi-wheel-prototype__name-initials">{{ person.initials }}</span>
+            <span class="multi-wheel-prototype__name-label">{{ person.label }}</span>
+          </button>
+        </li>
+      </ol>
     </div>
   </section>
 </template>
@@ -951,6 +1203,10 @@ onBeforeUnmount(() => {
   touch-action: none;
 }
 
+.multi-wheel-prototype__svg--portrait-hovered {
+  cursor: pointer;
+}
+
 .multi-wheel-prototype__axis {
   stroke: rgba(25, 25, 25, 0.2);
   stroke-dasharray: 6 8;
@@ -983,9 +1239,33 @@ onBeforeUnmount(() => {
   fill: transparent;
 }
 
+.multi-wheel-prototype__portrait-outline {
+  fill: none;
+  opacity: 0;
+  pointer-events: none;
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 6px;
+  transition: opacity 180ms ease;
+}
+
+.multi-wheel-prototype__portrait-outline--active {
+  opacity: 1;
+}
+
 .multi-wheel-prototype__portrait-image {
   pointer-events: none;
+  transition: filter 180ms ease;
   user-select: none;
+}
+
+.multi-wheel-prototype__portrait-image--muted {
+  filter: grayscale(1) saturate(0) contrast(0.62) brightness(1.16);
+}
+
+.multi-wheel-prototype__portrait-image--active {
+  filter: none;
 }
 
 .multi-wheel-prototype__initial {
@@ -993,16 +1273,147 @@ onBeforeUnmount(() => {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0;
+  opacity: 1;
   paint-order: stroke;
   pointer-events: none;
   stroke: rgba(255, 255, 255, 0.92);
   stroke-linejoin: round;
   stroke-width: 4px;
+  transition: opacity 180ms ease;
   user-select: none;
 }
 
 .multi-wheel-prototype__initial--inside {
   font-size: 13px;
+}
+
+.multi-wheel-prototype__initial--active-wheel {
+  opacity: 0;
+}
+
+.multi-wheel-prototype__name-list {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(25, 25, 25, 0.12);
+}
+
+.multi-wheel-prototype__name-list-header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.multi-wheel-prototype__name-list-header span {
+  color: #383838;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.multi-wheel-prototype__name-list-toggle {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid rgba(25, 25, 25, 0.22);
+  border-radius: 6px;
+  background: #fff;
+  color: #191919;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+}
+
+.multi-wheel-prototype__name-list-toggle:hover,
+.multi-wheel-prototype__name-list-toggle:focus-visible {
+  border-color: #3c4b9d;
+  outline: none;
+}
+
+.multi-wheel-prototype__names {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr));
+  gap: 6px;
+  max-height: 44px;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  list-style: none;
+  transition: max-height 220ms ease;
+}
+
+.multi-wheel-prototype__name-list--expanded .multi-wheel-prototype__names {
+  max-height: min(42vh, 310px);
+  overflow-y: auto;
+  padding-right: 3px;
+}
+
+.multi-wheel-prototype__name-item {
+  min-width: 0;
+}
+
+.multi-wheel-prototype__name-button {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px 0 7px;
+  border: 1px solid rgba(25, 25, 25, 0.12);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.6);
+  color: #191919;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.multi-wheel-prototype__name-button:hover,
+.multi-wheel-prototype__name-button:focus-visible,
+.multi-wheel-prototype__name-button--active {
+  border-color: #3c4b9d;
+  background: #fff;
+  color: #191919;
+  outline: none;
+}
+
+.multi-wheel-prototype__name-button--muted {
+  border-color: rgba(25, 25, 25, 0.08);
+  background: rgba(255, 255, 255, 0.36);
+  color: #8b8b86;
+}
+
+.multi-wheel-prototype__name-initials {
+  display: inline-grid;
+  min-width: 0;
+  min-height: 24px;
+  place-items: center;
+  border-radius: 4px;
+  background: #3c4b9d;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.multi-wheel-prototype__name-button--muted .multi-wheel-prototype__name-initials {
+  background: #9a9a94;
+}
+
+.multi-wheel-prototype__name-label {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 760px) {
@@ -1014,6 +1425,10 @@ onBeforeUnmount(() => {
     grid-column: 1 / -1;
     justify-content: flex-start;
     overflow-x: auto;
+  }
+
+  .multi-wheel-prototype__names {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 132px), 1fr));
   }
 }
 </style>
