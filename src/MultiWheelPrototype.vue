@@ -87,6 +87,7 @@ const LEFT_SHOULDER_LABEL_OFFSET_Y = 18
 const SNAP_DURATION_MS = 260
 const RELEASE_INERTIA_MS = 420
 const RELEASE_INERTIA_FACTOR = 170
+const HOVER_RELEASE_DELAY_MS = 200
 const WHEEL_CODES = ['HG', 'AB', 'RM', 'MM', 'SB', 'SC', 'RL', 'GO', 'JD', 'SM']
 const nameCollator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' })
 const PRIMARY_ROSTER: RosterPerson[] = [
@@ -183,6 +184,7 @@ let lastPointerAngle = 0
 let lastPointerTime = 0
 let angularVelocity = 0
 let snapFrameId: number | null = null
+let hoverReleaseTimer: ReturnType<typeof setTimeout> | null = null
 
 const circlePathData = parseSvgPath(vectorCircleSvg)
 const circleViewBox = parseViewBox(vectorCircleSvg)
@@ -328,6 +330,8 @@ function displayInitialsForWheel(wheel: Wheel) {
 }
 
 watch(peopleCount, () => {
+  cancelHoverRelease()
+  hoveredToken.value = null
   cancelSnap()
   activeWheelId.value = null
   dragRotation.value = 0
@@ -558,6 +562,7 @@ function onPointerDown(wheelId: number, event: PointerEvent) {
   lastPointerAngle = angleFromPointer(wheelId, event)
   lastPointerTime = performance.now()
   angularVelocity = 0
+  cancelHoverRelease()
   hoveredToken.value = null
   svg.setPointerCapture(event.pointerId)
 }
@@ -603,15 +608,31 @@ function updateHoveredTokenFromPointer(event: PointerEvent) {
     )
   })
 
-  hoveredToken.value = hoveredPortrait?.token ?? null
-
   if (hoveredPortrait) {
+    setHoveredToken(hoveredPortrait.token)
     expandNameList()
+  } else {
+    clearHoveredToken()
+  }
+}
+
+function cancelHoverRelease() {
+  if (hoverReleaseTimer !== null) {
+    clearTimeout(hoverReleaseTimer)
+    hoverReleaseTimer = null
   }
 }
 
 function clearHoveredToken() {
-  hoveredToken.value = null
+  if (hoverReleaseTimer !== null || hoveredToken.value === null) {
+    return
+  }
+
+  // Bridge gaps between portraits without flashing every image back to full color.
+  hoverReleaseTimer = setTimeout(() => {
+    hoveredToken.value = null
+    hoverReleaseTimer = null
+  }, HOVER_RELEASE_DELAY_MS)
 }
 
 function expandNameList() {
@@ -627,6 +648,7 @@ function isTokenMuted(token: number) {
 }
 
 function setHoveredToken(token: number) {
+  cancelHoverRelease()
   hoveredToken.value = token
 }
 
@@ -873,6 +895,7 @@ function wheelVectorTransform(wheel: Wheel) {
 }
 
 onBeforeUnmount(() => {
+  cancelHoverRelease()
   cancelSnap()
 })
 </script>
@@ -977,7 +1000,7 @@ onBeforeUnmount(() => {
               :class="{ 'multi-wheel-prototype__ring--active': activeWheelId === wheel.id }"
               :d="circlePathData"
               fill="none"
-              stroke="#6983ff"
+              stroke="#8996cf"
               stroke-width="10"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1247,11 +1270,12 @@ onBeforeUnmount(() => {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 6px;
-  transition: opacity 180ms ease;
+  transition: opacity 360ms ease 120ms;
 }
 
 .multi-wheel-prototype__portrait-outline--active {
   opacity: 1;
+  transition: opacity 180ms ease;
 }
 
 .multi-wheel-prototype__portrait-image {
@@ -1262,6 +1286,7 @@ onBeforeUnmount(() => {
 
 .multi-wheel-prototype__portrait-image--muted {
   filter: grayscale(1) saturate(0) contrast(0.62) brightness(1.16);
+  transition: filter 360ms ease 120ms;
 }
 
 .multi-wheel-prototype__portrait-image--active {
@@ -1388,6 +1413,10 @@ onBeforeUnmount(() => {
   border-color: rgba(25, 25, 25, 0.08);
   background: rgba(255, 255, 255, 0.36);
   color: #8b8b86;
+  transition:
+    background 360ms ease 120ms,
+    border-color 360ms ease 120ms,
+    color 360ms ease 120ms;
 }
 
 .multi-wheel-prototype__name-initials {
