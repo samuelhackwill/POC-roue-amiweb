@@ -1000,7 +1000,7 @@ onBeforeUnmount(() => {
               :class="{ 'multi-wheel-prototype__ring--active': activeWheelId === wheel.id }"
               :d="circlePathData"
               fill="none"
-              stroke="#989898"
+              stroke="#8996cf"
               stroke-width="10"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1244,16 +1244,28 @@ onBeforeUnmount(() => {
   opacity: 0.72;
 }
 
+.multi-wheel-prototype__rings,
+.multi-wheel-prototype__slots {
+  filter: grayscale(0);
+  transition: filter 360ms ease;
+}
+
+.multi-wheel-prototype__svg--portrait-hovered .multi-wheel-prototype__rings,
+.multi-wheel-prototype__svg--portrait-hovered .multi-wheel-prototype__slots {
+  filter: grayscale(1);
+  transition: filter 180ms ease;
+}
+
 .multi-wheel-prototype__slot {
   fill: #fff;
   opacity: 0.82;
   pointer-events: none;
-  stroke: #5b5b5b;
+  stroke: #3c4b9d;
   stroke-width: 1.4;
 }
 
 .multi-wheel-prototype__slot--occupied {
-  fill: #5b5b5b;
+  fill: #3c4b9d;
   opacity: 0.48;
   stroke-width: 0;
 }
