@@ -1000,7 +1000,7 @@ onBeforeUnmount(() => {
               :class="{ 'multi-wheel-prototype__ring--active': activeWheelId === wheel.id }"
               :d="circlePathData"
               fill="none"
-              stroke="#8996cf"
+              stroke="#989898"
               stroke-width="10"
               stroke-linecap="round"
               stroke-linejoin="round"
@@ -1248,12 +1248,12 @@ onBeforeUnmount(() => {
   fill: #fff;
   opacity: 0.82;
   pointer-events: none;
-  stroke: #3c4b9d;
+  stroke: #5b5b5b;
   stroke-width: 1.4;
 }
 
 .multi-wheel-prototype__slot--occupied {
-  fill: #3c4b9d;
+  fill: #5b5b5b;
   opacity: 0.48;
   stroke-width: 0;
 }
@@ -1280,17 +1280,18 @@ onBeforeUnmount(() => {
 
 .multi-wheel-prototype__portrait-image {
   pointer-events: none;
-  transition: filter 180ms ease;
+  transition: filter 360ms ease;
   user-select: none;
 }
 
 .multi-wheel-prototype__portrait-image--muted {
   filter: grayscale(1) saturate(0) contrast(0.62) brightness(1.16);
-  transition: filter 360ms ease 120ms;
+  transition: filter 180ms ease;
 }
 
 .multi-wheel-prototype__portrait-image--active {
   filter: none;
+  transition: filter 180ms ease;
 }
 
 .multi-wheel-prototype__initial {
@@ -1395,9 +1396,9 @@ onBeforeUnmount(() => {
   font: inherit;
   text-align: left;
   transition:
-    background 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease;
+    background 360ms ease,
+    border-color 360ms ease,
+    color 360ms ease;
 }
 
 .multi-wheel-prototype__name-button:hover,
@@ -1407,6 +1408,10 @@ onBeforeUnmount(() => {
   background: #fff;
   color: #191919;
   outline: none;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 .multi-wheel-prototype__name-button--muted {
@@ -1414,9 +1419,9 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.36);
   color: #8b8b86;
   transition:
-    background 360ms ease 120ms,
-    border-color 360ms ease 120ms,
-    color 360ms ease 120ms;
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 .multi-wheel-prototype__name-initials {
