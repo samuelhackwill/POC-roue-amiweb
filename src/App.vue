@@ -68,7 +68,13 @@ const vectorByCount: Record<number, string> = {
   10: vector10Svg,
 }
 const selectedWheelVector = computed(() => vectorByCount[selectedPeopleCount.value])
-const selectedWheelPortraits = computed(() => portraitsFor(selectedPeopleCount.value))
+const selectedWheelPortraits = computed(() =>
+  portraitsFor(selectedPeopleCount.value).map((person) =>
+    person.label === 'Marion Le Guerroué'
+      ? { ...person, label: 'Lorette Moreau', alt: 'Lorette Moreau' }
+      : person,
+  ),
+)
 
 function portraitsFor(count: number): DemoPortraitItem[] {
   return portraitUrls.slice(0, count).map((src, index) => ({
