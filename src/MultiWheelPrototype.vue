@@ -71,7 +71,6 @@ const props = withDefaults(defineProps<MultiWheelPrototypeProps>(), {
 const MIN_PEOPLE = 1
 const MAX_PEOPLE = 120
 const WHEEL_SLOT_COUNT = 10
-const DEFAULT_PEOPLE_COUNT = 24
 const WHEEL_RADIUS = 96
 const WHEEL_SPACING = WHEEL_RADIUS * 2
 const WHEEL_MARGIN_X = 150
@@ -110,6 +109,7 @@ const PRIMARY_ROSTER: RosterPerson[] = [
   { code: 'SIL', label: 'Louise Siffert', familyName: 'Siffert' },
   { code: 'VIS', label: 'Sébastien Vial', familyName: 'Vial' },
 ]
+const DEFAULT_PEOPLE_COUNT = PRIMARY_ROSTER.length
 const ADDITIONAL_FIRST_NAMES = [
   'Agathe',
   'Baptiste',
@@ -138,7 +138,6 @@ const ADDITIONAL_FIRST_NAMES = [
   'Zoé',
 ]
 const ADDITIONAL_LAST_NAMES = [
-  'Allard',
   'Benoit',
   'Charpentier',
   'Delmas',
@@ -1297,7 +1296,7 @@ onBeforeUnmount(() => {
 }
 
 .multi-wheel-prototype__portrait-image--muted {
-  filter: grayscale(1) saturate(0) contrast(0.62) brightness(1.16);
+  filter: grayscale(1) saturate(0) contrast(0.35) brightness(1.6);
   transition: filter 180ms ease;
 }
 
@@ -1429,7 +1428,7 @@ onBeforeUnmount(() => {
 .multi-wheel-prototype__name-button--muted {
   border-color: rgba(25, 25, 25, 0.08);
   background: rgba(255, 255, 255, 0.36);
-  color: #8b8b86;
+  color: #aaa9a3;
   transition:
     background 180ms ease,
     border-color 180ms ease,
@@ -1450,7 +1449,7 @@ onBeforeUnmount(() => {
 }
 
 .multi-wheel-prototype__name-button--muted .multi-wheel-prototype__name-initials {
-  background: #9a9a94;
+  background: #b8b8b2;
 }
 
 .multi-wheel-prototype__name-label {
